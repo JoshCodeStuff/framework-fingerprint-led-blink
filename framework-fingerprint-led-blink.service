@@ -1,0 +1,16 @@
+[Unit]
+Description=Blink power-button LED while fprintd waits for a finger
+After=dbus.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/framework-fingerprint-led-blink
+ExecStopPost=/bin/sh -c 'echo chromeos-auto > /sys/class/leds/chromeos:white:power/trigger'
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=yes
+ProtectHome=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

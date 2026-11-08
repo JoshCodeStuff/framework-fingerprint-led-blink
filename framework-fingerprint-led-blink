@@ -1,0 +1,106 @@
+#!/usr/bin/python3 -I
+"""Blink the Framework 16 power-button LED while fprintd waits for a finger.
+
+Watches the system bus (as root, via dbus-monitor/BecomeMonitor) for
+net.reactivated.Fprint.Device VerifyStart / EnrollStart and blinks
+chromeos:white:power until VerifyStop / EnrollStop / a final status / Release,
+or a safety timeout. The LED is always handed back to the EC (chromeos-auto).
+"""
+import signal
+import subprocess
+import sys
+import threading
+
+LED = "/sys/class/leds/chromeos:white:power"
+ON_S, OFF_S = 0.25, 0.25
+MAX_BLINK_S = 60          # safety: never blink longer than this
+IFACE = "net.reactivated.Fprint.Device"
+START = {"VerifyStart", "EnrollStart"}
+STOP = {"VerifyStop", "EnrollStop", "Release"}
+
+stop_evt = threading.Event()
+lock = threading.Lock()
+blinker = None
+
+
+def write(name, value):
+    try:
+        with open(f"{LED}/{name}", "w") as f:
+            f.write(value)
+    except OSError as e:
+        print(f"LED write {name}={value} failed: {e}", file=sys.stderr)
+
+
+def restore():
+    write("trigger", "chromeos-auto")
+
+
+def blink_loop(evt):
+    write("trigger", "none")
+    elapsed = 0.0
+    try:
+        while not evt.is_set() and elapsed < MAX_BLINK_S:
+            write("brightness", "100")
+            if evt.wait(ON_S):
+                break
+            write("brightness", "0")
+            if evt.wait(OFF_S):
+                break
+            elapsed += ON_S + OFF_S
+    finally:
+        restore()
+
+
+def start_blink():
+    global blinker, stop_evt
+    with lock:
+        if blinker and blinker.is_alive():
+            return
+        stop_evt = threading.Event()
+        blinker = threading.Thread(target=blink_loop, args=(stop_evt,), daemon=True)
+        blinker.start()
+
+
+def stop_blink():
+    with lock:
+        stop_evt.set()
+        t = blinker
+    if t:
+        t.join(timeout=2)
+
+
+def shutdown(*_):
+    stop_blink()
+    restore()
+    sys.exit(0)
+
+
+def main():
+    signal.signal(signal.SIGTERM, shutdown)
+    signal.signal(signal.SIGINT, shutdown)
+    restore()
+    proc = subprocess.Popen(
+        ["dbus-monitor", "--system", f"interface='{IFACE}'"],
+        stdout=subprocess.PIPE, text=True, bufsize=1,
+    )
+    pending_status = False   # next arg lines belong to a VerifyStatus/EnrollStatus signal
+    for line in proc.stdout:
+        line = line.strip()
+        if f"interface={IFACE}" in line and "member=" in line:
+            member = line.rsplit("member=", 1)[1].split()[0]
+            pending_status = member in ("VerifyStatus", "EnrollStatus")
+            if member in START and line.startswith("method call"):
+                start_blink()
+            elif member in STOP and line.startswith("method call"):
+                stop_blink()
+            continue
+        # VerifyStatus(s result, b done): stop once done == true
+        if pending_status and line.startswith("boolean"):
+            pending_status = False
+            if line.endswith("true"):
+                stop_blink()
+    shutdown()
+
+
+if __name__ == "__main__":
+    main()
