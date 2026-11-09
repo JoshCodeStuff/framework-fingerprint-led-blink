@@ -1,5 +1,5 @@
 #!/usr/bin/python3 -I
-"""Blink the Framework 16 power-button LED while fprintd waits for a finger.
+"""Blink the Framework Laptop (13 / 16) power-button LED while fprintd waits for a finger.
 
 Watches the system bus (as root, via dbus-monitor/BecomeMonitor) for
 net.reactivated.Fprint.Device VerifyStart / EnrollStart and blinks

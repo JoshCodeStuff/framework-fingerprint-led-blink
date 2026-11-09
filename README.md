@@ -8,7 +8,7 @@ reader is waiting for your finger.
   <br><sub>Framework Laptop 16 waiting for a fingerprint during <code>sudo</code> (2× speed)</sub>
 </p>
 
-On the Framework Laptop 16 the fingerprint reader lives inside the power
+On Framework laptops (13 and 16) the fingerprint reader lives inside the power
 button, but nothing tells you when it is actually expecting a touch (sudo,
 lock screen, KWallet, polkit…). Neither fprintd, the BIOS, nor the desktop
 offer a setting for this, so this small service adds the visual cue.
@@ -66,9 +66,31 @@ Edit the constants at the top of `framework-fingerprint-led-blink` (`ON_S`, `OFF
 
 ## Tested on
 
-Tested and installed on 2026-11-08.
+### Community reports
 
-### Software
+Thanks to everyone who tested it after the
+[r/framework post](https://www.reddit.com/r/framework/comments/1xr9mlb/made_the_fw16_power_button_blink_while_the/)!
+
+| Laptop | Distro | Install method | Reported by |
+|---|---|---|---|
+| Framework Laptop 16 (Ryzen AI 9 HX 370) | Fedora 45 | `install.sh` | maintainer (reference system below) |
+| Framework Laptop 13 (Ryzen AI 300) | Fedora 45 | `install.sh` | [u/countChaiula](https://www.reddit.com/user/countChaiula) |
+| Framework Laptop 13 (Ryzen 5 7640U) | Arch Linux | manual | [u/newenglandpolarbear](https://www.reddit.com/user/newenglandpolarbear) |
+| Framework Laptop 13 (Core Ultra 5 125H) | Arch Linux | manual | [u/X_m7](https://www.reddit.com/user/X_m7) |
+| Framework laptop | CachyOS | `install.sh` with the `dnf` line commented out, deps installed by hand | [u/CRRogue](https://www.reddit.com/user/CRRogue) |
+
+So far it works on the **Laptop 16** and the **Laptop 13 (AMD and Intel)**.
+On non-Fedora distros, install `fprintd`, `dbus` (for `dbus-monitor`) and
+`python` with your package manager first; native Arch support in the installer
+is in progress ([#1](https://github.com/alejandroqh/framework-fingerprint-led-blink/pull/1)).
+
+Tested it on another model or distro? Open an issue or PR to add it here.
+
+### Reference system
+
+Developed, tested and installed on 2026-11-08.
+
+#### Software
 
 | Component | Version |
 |---|---|
@@ -84,7 +106,7 @@ Tested and installed on 2026-11-08.
 | Desktop | KDE Plasma 6.8.2 (Wayland) |
 | SELinux | enforcing |
 
-### Hardware
+#### Hardware
 
 | Component | Details |
 |---|---|
@@ -94,9 +116,10 @@ Tested and installed on 2026-11-08.
 | Fingerprint sensor | Goodix Match-on-Chip, USB `27C6:609C`, firmware `01000334` |
 | LED | `chromeos:white:power` (power button, via `leds_cros_ec`) |
 
-It should also work on other Framework models (e.g. Laptop 13) that expose the
-same `chromeos:white:power` LED and use fprintd, but that is untested.
-Reports welcome.
+## Ports
+
+- **NixOS**: [sophronesis/nix-framework-fingerprint-led-blink](https://github.com/sophronesis/nix-framework-fingerprint-led-blink)
+  by [u/Sophronesis0](https://www.reddit.com/user/Sophronesis0)
 
 ## Troubleshooting
 
@@ -110,6 +133,18 @@ If the LED ever gets stuck, return it to the EC manually:
 ```bash
 echo chromeos-auto | sudo tee /sys/class/leds/chromeos:white:power/trigger
 ```
+
+## Credits
+
+- Community testers listed in [Community reports](#community-reports):
+  u/countChaiula, u/newenglandpolarbear, u/X_m7 and u/CRRogue.
+- [u/Sophronesis0](https://www.reddit.com/user/Sophronesis0) for the NixOS port.
+- [@JoshCodeStuff](https://github.com/JoshCodeStuff) for working on
+  non-Fedora support in the installer.
+- [u/DynoMenace](https://www.reddit.com/user/DynoMenace) for pointing out that
+  the firmware adapts this LED's brightness to ambient light.
+- [u/jknvv13](https://www.reddit.com/user/jknvv13) and
+  [u/2Michael2](https://www.reddit.com/user/2Michael2) for the fade-mode idea.
 
 ## License
 
