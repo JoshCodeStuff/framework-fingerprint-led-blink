@@ -134,18 +134,6 @@ If the LED ever gets stuck, return it to the EC manually:
 echo chromeos-auto | sudo tee /sys/class/leds/chromeos:white:power/trigger
 ```
 
-## Credits
-
-- Community testers listed in [Community reports](#community-reports):
-  u/countChaiula, u/newenglandpolarbear, u/X_m7 and u/CRRogue.
-- [u/Sophronesis0](https://www.reddit.com/user/Sophronesis0) for the NixOS port.
-- [@JoshCodeStuff](https://github.com/JoshCodeStuff) for working on
-  non-Fedora support in the installer.
-- [u/DynoMenace](https://www.reddit.com/user/DynoMenace) for pointing out that
-  the firmware adapts this LED's brightness to ambient light.
-- [u/jknvv13](https://www.reddit.com/user/jknvv13) and
-  [u/2Michael2](https://www.reddit.com/user/2Michael2) for the fade-mode idea.
-
 ## License
 
 Apache License 2.0, see [LICENSE](LICENSE).
